@@ -58,6 +58,10 @@ end
 
 ## insert ruby codes
 ```
->> cb-rb -i shellcmd -I 2
+>> cb-rb -i shellcmd -I 2 -f filename,2
 ```
 default has no indent only if specified by `-I`
+*inserted as a new file*
+```
+>> cb-rb -i shellcmd -f filename
+```
