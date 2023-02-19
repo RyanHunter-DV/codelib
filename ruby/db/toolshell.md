@@ -1,14 +1,13 @@
+**description**
+This code block used for tool shell for every ruby programs
+**code**
 #! /usr/bin/env ruby
-
-
-# insert code example:
-# cb-rb -i <codeid> -f <filename,start> [-I <indent>]
-
 
 require 'rhload';
 
 $version = 'v1';
-$toolhome = File.dirname(File.absolute_path(__FILE__));
+$bin = File.dirname(File.absolute_path(__FILE__));
+$toolhome = File.join(File.dirname($bin),'ruby');
 $LOAD_PATH << $toolhome;
 $lib = "lib_#{$version}";
 

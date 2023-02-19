@@ -1,3 +1,7 @@
+**description**
+A typical class used when developing a ruby tool,
+it simply used based on the standard OptionParser
+**code**
 require 'optparse';
 
 class Options

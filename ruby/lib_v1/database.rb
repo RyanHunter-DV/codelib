@@ -17,6 +17,12 @@ class DataBase
 		@dbfiles = Dir.children(@dbhome);
 	end
 
+	def remove(id) ##{{{
+		fn = __getfile__(id);
+		File.delete(fn);
+		return;
+	end ##}}}
+
 	def __readlines__(f,s=1,e=-1) ##{{{
 		cnts = [];
 		fh = File.open(f,'r');

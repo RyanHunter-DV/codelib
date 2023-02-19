@@ -43,6 +43,7 @@ class MainEntry
 			rtn[:start] = splitted[1].to_i;
 			rtn[:end]   = splitted[2].to_i;
 		end
+		@debug.print("positions: file(#{rtn[:file]}),start(#{rtn[:start]}),end(#{rtn[:end]})");
 		return rtn;
 	end
 	# store code
@@ -119,6 +120,12 @@ class MainEntry
 		return;
 	end
 
+	def __remove__ ##{{{
+		id = @option.codeid;
+		raise RunException.new("id not exists",3) unless @db.codeid?(id);
+		@db.remove(id);
+	end ##}}}
+
 	def run
 		begin
 			@db.load();
@@ -126,6 +133,7 @@ class MainEntry
 			__store__   if @option.mode==:store;
 			__insert__  if @option.mode==:insert;
 			__display__ if @option.mode==:display;
+			__remove__  if @option.mode==:remove;
 		rescue RunException => e
 			@exitSig = e.process();
 		end
