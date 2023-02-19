@@ -3,7 +3,7 @@
 - can insert the code block into a specified file from certain line.
 
 This will be a separate tool into GitHub, made by ruby.
-tool name: 
+tool name: cb-rb
 
 # Features
 ## marker that can use replacement
@@ -52,6 +52,11 @@ end
 >> cb-rb -d -n shellcmd
 ```
 *searching code block*
+by searching mode, can search keywords in code or in description, according to what users provided
+```
+>> cb-rb -d -r "codeblock for processing shellcmd"
+```
+*or*:
 ```
 >> cb-rb -d -r 'regexp'
 ```
@@ -60,7 +65,9 @@ end
 ```
 >> cb-rb -i shellcmd -I 2 -f filename,2
 ```
-default has no indent only if specified by `-I`
+- default has no indent only if specified by `-I`
+- if user specifies '-f' with only filename, then it will be inserted from line 1
+
 *inserted as a new file*
 ```
 >> cb-rb -i shellcmd -f filename
