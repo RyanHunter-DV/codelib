@@ -12,8 +12,11 @@ class Options
 	attr :option;
 	attr :debug;
 	def initialize(d)
-		@debug = d;
-		@mode  = :idle;
+		@debug  = d;
+		@mode   = :idle;
+		@codeid = '';
+		@pattern= '';
+		@indent =  0;
 		@positions = {};
 		@option = OptionParser.new() do |opt|
 			opt.on('-s','--store=CODEID','store mode to record the codes into lib') do |v|

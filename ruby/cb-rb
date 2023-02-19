@@ -1,4 +1,10 @@
 #! /usr/bin/env ruby
+
+
+# insert code example:
+# cb-rb -i <codeid> -f <filename,start> [-I <indent>]
+
+
 require 'rhload';
 
 $version = 'v1';
@@ -16,5 +22,5 @@ rhload "#{$lib}/mainentry.rb";
 debug=Debugger.new(false);
 e = MainEntry.new(debug);
 $SIG = e.run();
-puts "program exists with sig: #{$SIG}";
+debug.print("program exists with sig: #{$SIG}");
 exit $SIG;

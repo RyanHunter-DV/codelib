@@ -37,10 +37,11 @@ class MainEntry
 			rtn[:file]=splitted[0];
 			rtn[:start]=splitted[1];
 			rtn[:start]=1 if rtn[:start].chomp=='';
+			rtn[:start] = rtn[:start].to_i;
 		else
 			rtn[:file]  = splitted[0];
-			rtn[:start] = splitted[1];
-			rtn[:end]   = splitted[2];
+			rtn[:start] = splitted[1].to_i;
+			rtn[:end]   = splitted[2].to_i;
 		end
 		return rtn;
 	end
@@ -71,6 +72,7 @@ class MainEntry
 		fh = File.open(tmpf,'r');
 		desc = fh.readlines();
 		fh.close;
+		system("rm -rf #{tmpf}");
 		desc.delete_at(0);
 		desc.each do |line|
 			line.chomp!;
@@ -79,10 +81,42 @@ class MainEntry
 	end
 
 	def __insert__
-		#TODO
+		ps    = __position__(@option.positions[:insert]);
+		indent= @option.indent.to_i;
+		id    = @option.codeid;
+		raise RunException.new("no codeid found in lib",3) unless @db.codeid?(id);
+		cnts = @db.getcodes(id);
+		cnts.map!{|l| "\t"*indent+l;};
+		@debug.print("prepare codes: #{cnts}");
+		@fop.insert(cnts,ps[:file],ps[:start]);
+		return;
 	end
+	def __displayByCodeid__(id) ##{{{
+		raise RunException.new("no such codeid in lib") unless @db.codeid?(id);
+		@db.display(id);
+		return;
+	end ##}}}
+	def __displayByPattern__(ptrn) ##{{{
+		ids = @db.search(ptrn);
+		if ids.empty?
+			puts "no matched codeid in library !";
+		else
+			ids.each do |id|
+				@db.display(id);
+			end
+		end
+		return;
+	end ##}}}
+
 	def __display__
-		#TODO
+		if @option.codeid!=''
+			__displayByCodeid__(@option.codeid);
+		elsif @option.pattern!=''
+			__displayByPattern__(@option.pattern);
+		else
+			raise RunException.new("no name or pattern specified for cb display",3);
+		end
+		return;
 	end
 
 	def run
