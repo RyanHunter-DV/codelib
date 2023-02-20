@@ -39,6 +39,7 @@ class FileOperator
 			new << l;
 			current += 1;
 		end
+		new.append(*cnts) if origin.empty?;
 		fh = File.open(fn,'w');
 		new.each do |l|
 			fh.write(l);
