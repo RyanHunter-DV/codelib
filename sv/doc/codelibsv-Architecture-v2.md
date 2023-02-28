@@ -63,10 +63,16 @@ database file:
 **description**
 here is description
 ...
+**code**
 ```
 here is code
+function void build_phase(
+	uvm_phase phase,
+	string api
+);
+	super.build_phase(phase);
+endfunction
 ```
-
 ---
 
 # Architecture
@@ -78,12 +84,17 @@ here is code
 5. store mode, to store code
 6. #TBD
 
+
+
+
 # MainEntry
 **file** 'lib_v2/mainentry.rb'
 **class** `MainEntry`
 **require**
 ```
-fileOperator
+fileOperator.rb
+options.rb
+database.rb
 ```
 **field**
 ```
@@ -148,16 +159,99 @@ return args;
 message = "#{@cmd}Process".to_sym;
 self.send(message);
 ```
+
 ## processing different commands
+**api** `storeProcess()`
 - capture code segment from specified file.
 - arrange code lib database format.
-**api** `storeProcess()`
 ```
 cnts = @fop.captureCodes(@options[:file],@options[:start],@options[:end]);
 desc = description();
 cnts = marking(cnts) if @options[:mark];
 @db.store(@codeid,@options[:type],desc,cnts);
 ```
+**api** `insertProcess()`
+- by given options, get code from db, and insert to target file
+- if has -o option, need to process mark replacement
+- if type is method, need to search the target file, if given line is within a class
+- then insert this method into that class.
+```ruby
+# codedb has format: {:id=>'',:type=>'',:desc=>'',:code=>[]}
+codedb = @db.load(@codeid);
+codedb[:code] = __replaceMarks__(codedb[:code],@options[:ovrd]) if @options[:ovrd];
+info = {:classname=>'',:endclass=>0};
+info = @fop.findEnclosedClass(@options[:file],@options[:start]) if codedb[:type]=='method';
+if info[:classname]
+	# methods within class
+	heads = filterMethodHead(codedb[:code]);
+	heads[0]= "extern "+heads[0];
+	insertMethodPrototype(@options[:file],@options[:start],heads);
+	addClassScope(codedb[:code][0],info[:classname]);
+	insertMethodBody(@options[:file],info[:endclass]+1,codedb[:code]);
+else
+	# pure methods
+	insertMethodBody(@options[:file],@options[:start],codedb[:code]);
+end
+```
+**api** `insertMethodPrototype(fn,s,cnts)`
+```ruby
+cnts.map!{|line| "\t"+line;};
+@fop.insertContents(fn,s,cnts);
+return;
+```
+**api** `insertMethodBody(fn,s,cnts)`
+```ruby
+@fop.insertContents(fn,s,cnts);
+```
+
+**api** `addClassScope(h,cn)`
+- add the head of method from database with class scope
+```ruby
+ptrn = Regexp.new(/(\S+)\s*\(/);
+mdata = ptrn.match(h);
+mn = mdata[1] if mdata;
+h.sub!(mn,"#{cn}::#{mn}");
+return;
+```
+**api** `filterMethodHead(src)`
+```ruby
+rtns = [];
+src.each do |l|
+	if /);/=~l
+		rtns << l;
+		break;
+	end
+	rtns << l;
+end
+return rtns;
+```
+
+**api** `__replaceMarks__(cnts,ovrd)`
+```ruby
+replaced = [];
+ovrds = __filterOverrides__(ovrd);
+cnts.each do |line|
+	ptrn = Regexp.new(/\<(\d+)\>/);
+	mdata = ptrn.match(line);
+	if mdata
+		m = mdata[1];
+		line.gsub!(/\<\d+\>/,ovrds[m]);
+	end
+	replaced << line;
+end
+return replaced;
+```
+
+**api** `__filterOverrdies__(ovrd)`
+```ruby
+ovrds = {};
+splitted = ovrd.split(',');
+splitted.each_with_index do |i,o|
+	ovrds[i.to_s] = o;
+end
+return ovrds;
+```
+
 details: [[#FileOperator]]
 
 ## get marked codes
@@ -232,6 +326,7 @@ options
 @debug = d;
 @options={};
 @options[:mark] = false;
+@options[:ovrd] = '';
 opt = Option.new() do |o|
 	o.on('-f','--filename=FILENAME','specify filename with line options') do |v|
 		fileterFilename(v);
@@ -240,6 +335,7 @@ opt = Option.new() do |o|
 		@options[:mark] = v;
 	end
 	o.on('-o','--override=REPLACEMENT','set replacement for mark') do |v|
+		# type of override: -o "a,b,c"
 		@options[:ovrd] = v;
 	end
 	o.on('-t','--type=TYPE','specify the type of code being stored') do |v|
@@ -280,6 +376,21 @@ dbroot
 ```
 @dbroot = File.join(#{$toolhome},'db');
 ```
+**api** `insertContents(fn,s,cnts)`
+```ruby
+fh = File.open(fn,'r');
+all = fh.readlines();
+fh.close;
+cnts.map!{|l|l+"\n";}; cntr = cnts.reverse;
+all.insert(s,*cntr);
+fh = File.open(fn,'w');
+all.each do |l|
+	fh.write(l);
+end
+fh.close();
+return;
+```
+
 **api** `captureCodes(fn,s=1,e=-1)`
 capturing specific lines from given file
 s is start line, e is end line, if e is -1, then will capture until the end of file.
@@ -298,12 +409,88 @@ end
 cnts.map!{|l| l.chomp;};
 return cnts;
 ```
+## find enclosed classname and endclass line
+according to given file, and line, find if current line is enclosed by a class
+**api** `findEnclosedClass(fn,s)`
+```ruby
+info = {:classname=>'',:endclass=>0};
+fh = File.open(fn,'r');
+cnts = fh.readlines();
+ptrn = Regexp.new(/^\s*\w*\s*class\s+(\S+)/);
+cnts.each_with_index do |i,l|
+	mdata = ptrn.match(l);
+	info[:classname] = mdata[1] if i+1<s and mdata;
+	info[:endclass] = i+1 if i+1>s and info[:classname] and /endclass/=~l;
+end
+return info;
+```
 
 # DataBase
 **file** 'lib_v2/database.rb'
 **class** `DataBase`
 **field**
 ```
+debug
+dbhome
 ```
-#MARK
+**api** `initialize(d)`
+```ruby
+@debug = d;
+@dbhome = File.join($toolhome,'db');
+```
+**api** `store(codeid,type,desc,cnts)`
+```ruby
+f = __getfile__(codeid);
+fh = File.open(f,'w');
+fh.write("**codelib** `#{codeid}`\n");
+fh.write("**codetype** `#{type}`\n");
+fh.write("**description**\n");
+desc.each do |l|
+	fh.write("#{l}\n");
+end
+fh.write("**code**\n");
+__removeStartIndents__(cnts);
+__removeSVClassScope__(cnts) if type=='method';
+fh.write("```\n");
+cnts.each do |l|
+	fh.write("#{l}\n");
+end
+fh.write("```\n");
+fh.close;
+```
+
+**api** `__getfile__(id)`
+```ruby
+return File.join(@dbhome,id+'.md');
+```
+
+**api** `__removeStartIndents__(src)`
+```ruby
+start  = true;
+indent = nil;
+m = nil;
+src.each do |s|
+	if start==true
+		m = /(^\t*)/.match(s);
+		if m
+			ptrn = "^"+m[1].gsub(/\t/,'\t');
+			@debug.print("ptrn: #{ptrn}");
+			indent = Regexp.new(ptrn);
+		end
+	end
+	start = false if start==true;
+	s.sub!(indent,'') if indent;
+end
+@debug.print("removed:#{src}");
+return;
+```
+**api** `__removeSVClassScope__(src)`
+```ruby
+ptrn = Regexp.new(/\S+::/);
+src.each do |line|
+	mdata = ptrn.match(line);
+	line.sub!(/\S+::/) if mdata;
+end
+return;
+```
 #TBD
