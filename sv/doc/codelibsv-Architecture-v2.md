@@ -87,6 +87,7 @@ endfunction
 
 
 
+
 # MainEntry
 **file** 'lib_v2/mainentry.rb'
 **class** `MainEntry`
@@ -159,17 +160,18 @@ return args;
 message = "#{@cmd}Process".to_sym;
 self.send(message);
 ```
-
-## processing different commands
+details: [[#FileOperator]]
+## processing store command
 **api** `storeProcess()`
 - capture code segment from specified file.
 - arrange code lib database format.
-```
+```ruby
 cnts = @fop.captureCodes(@options[:file],@options[:start],@options[:end]);
 desc = description();
 cnts = marking(cnts) if @options[:mark];
 @db.store(@codeid,@options[:type],desc,cnts);
 ```
+## process insert command
 **api** `insertProcess()`
 - by given options, get code from db, and insert to target file
 - if has -o option, need to process mark replacement
@@ -178,7 +180,7 @@ cnts = marking(cnts) if @options[:mark];
 ```ruby
 # codedb has format: {:id=>'',:type=>'',:desc=>'',:code=>[]}
 codedb = @db.load(@codeid);
-codedb[:code] = __replaceMarks__(codedb[:code],@options[:ovrd]) if @options[:ovrd];
+codedb[:code] = replaceMarks(codedb[:code],@options[:ovrd]) if @options[:ovrd];
 info = {:classname=>'',:endclass=>0};
 info = @fop.findEnclosedClass(@options[:file],@options[:start]) if codedb[:type]=='method';
 if info[:classname]
@@ -203,7 +205,6 @@ return;
 ```ruby
 @fop.insertContents(fn,s,cnts);
 ```
-
 **api** `addClassScope(h,cn)`
 - add the head of method from database with class scope
 ```ruby
@@ -226,10 +227,10 @@ end
 return rtns;
 ```
 
-**api** `__replaceMarks__(cnts,ovrd)`
+**api** `replaceMarks(cnts,ovrd)`
 ```ruby
 replaced = [];
-ovrds = __filterOverrides__(ovrd);
+ovrds = filterOverrides(ovrd);
 cnts.each do |line|
 	ptrn = Regexp.new(/\<(\d+)\>/);
 	mdata = ptrn.match(line);
@@ -242,7 +243,7 @@ end
 return replaced;
 ```
 
-**api** `__filterOverrdies__(ovrd)`
+**api** `filterOverrides(ovrd)`
 ```ruby
 ovrds = {};
 splitted = ovrd.split(',');
@@ -252,11 +253,21 @@ end
 return ovrds;
 ```
 
-details: [[#FileOperator]]
-
+## process search command
+**api** `searchProcess`
+```ruby
+codeids = @db.search(@pattern);
+codeids.each do |codeid|
+	cnts = @db.load(codeid);
+	puts "-"*60;
+	puts cnts.join("\n");
+	puts "-"*60;
+end
+return;
+```
 ## get marked codes
 **api** `marking`
-```
+```ruby
 cnts = [];
 tmpf = "./.tmpf_cbrb_#{Process.pid}";
 fh = File.open(tmpf,'w');
@@ -284,7 +295,7 @@ return cnts;
 
 ## get description for store code
 **api** `description`
-```
+```ruby
 tmpf = "./.tmpf_cbrb_#{Process.pid}";
 fh = File.open(tmpf,'w');
 fh.write("please enter your codeblock description below:");
@@ -432,6 +443,8 @@ return info;
 ```
 debug
 dbhome
+dbfiles
+open3
 ```
 **api** `initialize(d)`
 ```ruby
@@ -493,4 +506,34 @@ src.each do |line|
 end
 return;
 ```
+**api** `loaddb`
+```ruby
+@dbfiles = Dir.children(@dbhome);
+```
+
+**api** `load(id)`
+load specific id codes and return to caller
+```ruby
+fh = File.open(File.join(@dbhome,"#{id}.md"),'r');
+cnts = fh.readlines()
+cnts.map!{|l| l.chomp;};
+return cnts;
+```
+
+## search pattern from codelib
+**api** `search(ptrn)`
+```ruby
+cmd = %Q|grep -r "#{ptrn} #{@dbhome}/|;
+out,err,st = Open3.capture3(cmd);
+outs = out.split("\n");
+idptrn = Regexp.new(/^(\S+)\s*:/);
+matches=[];
+outs.each do |oline|
+	mdata = idptrn.match(oline);
+	matches << mdata[1] if mdata;
+end
+matches.uniq!;
+return matches;
+```
+
 #TBD
