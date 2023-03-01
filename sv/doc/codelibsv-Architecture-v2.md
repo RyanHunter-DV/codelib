@@ -86,6 +86,9 @@ endfunction
 
 
 
+# ToolShell
+**file** `cb-sv`
+**rbcode** `toolshell`
 
 
 # MainEntry
@@ -96,6 +99,7 @@ endfunction
 fileOperator.rb
 options.rb
 database.rb
+runException.rb
 ```
 **field**
 ```
@@ -127,6 +131,7 @@ feed it to option parser to process remaining options.
 **api** `filterCmd(args)`
 ```ruby
 @cmd = args.shift();
+raise RunException.new("no command specified",4) if @cmd==nil;
 message = "#{@cmd}PreProcess".to_sym;
 return self.send(message,args);
 ```
@@ -144,7 +149,7 @@ return args;
 **api** `searchPreProcess(args)`
 ```
 # pattern used for search actions
-@pattern = Regexp.new(args.shift);
+@pattern = args.shift;
 return args;
 ```
 **api** `insertPreProcess(args)`
@@ -218,7 +223,7 @@ return;
 ```ruby
 rtns = [];
 src.each do |l|
-	if /);/=~l
+	if /\);/=~l
 		rtns << l;
 		break;
 	end
@@ -257,6 +262,7 @@ return ovrds;
 **api** `searchProcess`
 ```ruby
 codeids = @db.search(@pattern);
+raise RunException.new("nothing matched with '#{@pattern}'",0) if codeids.empty?;
 codeids.each do |codeid|
 	cnts = @db.load(codeid);
 	puts "-"*60;
@@ -338,7 +344,7 @@ options
 @options={};
 @options[:mark] = false;
 @options[:ovrd] = '';
-opt = Option.new() do |o|
+opt = OptionParser.new() do |o|
 	o.on('-f','--filename=FILENAME','specify filename with line options') do |v|
 		fileterFilename(v);
 	end
@@ -352,7 +358,7 @@ opt = Option.new() do |o|
 	o.on('-t','--type=TYPE','specify the type of code being stored') do |v|
 		@options[:type] = v;
 	end
-end
+end.parse!
 ```
 ## filterFilename
 according to the filename option, which might have the line options, to get the file,start,end options:
@@ -385,7 +391,7 @@ dbroot
 ```
 **api** `initialize(d)`
 ```
-@dbroot = File.join(#{$toolhome},'db');
+@dbroot = File.join($toolhome,'db');
 ```
 **api** `insertContents(fn,s,cnts)`
 ```ruby
@@ -439,12 +445,15 @@ return info;
 # DataBase
 **file** `lib_v2/database.rb`
 **class** `DataBase`
+**require**
+```
+open3
+```
 **field**
 ```
 debug
 dbhome
 dbfiles
-open3
 ```
 **api** `initialize(d)`
 ```ruby
@@ -523,10 +532,12 @@ return cnts;
 ## search pattern from codelib
 **api** `search(ptrn)`
 ```ruby
-cmd = %Q|grep -r "#{ptrn} #{@dbhome}/|;
+cmd = %Q|grep -r "#{ptrn}" #{@dbhome}/|;
 out,err,st = Open3.capture3(cmd);
+@debug.print("grep cmd: #{cmd}");
+@debug.print("find grep: #{out}");
 outs = out.split("\n");
-idptrn = Regexp.new(/^(\S+)\s*:/);
+idptrn = Regexp.new(/^.*\/(\S+)\.md\s*:/);
 matches=[];
 outs.each do |oline|
 	mdata = idptrn.match(oline);
@@ -535,5 +546,13 @@ end
 matches.uniq!;
 return matches;
 ```
+
+# Debugger
+**file** `lib_v2/debugger.rb`
+**rbcode** `debugger`
+
+# RunException
+**file** `lib_v2/runException.rb`
+**rbcode** `RunException`
 
 #TBD
