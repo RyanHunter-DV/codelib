@@ -1,23 +1,23 @@
 # Features
+by using of a shared database, users can customize their own codes easily.
 ## calling cmd with options
-the command name is `cb-sv`, can will be called with a sub-command to specify the behavior, like:
+the tool executor name is `cb-sv`, can  be called with a sub-command to specify the behavior, like:
 ```
 cb-sv search [options]
 cb-sv insert [options]
-...
 ```
-*supported commands:*
-- search
-- insert
-- store
-- list, show a specific code with the specified codeid
-- int, reserve for interactive command
+*support commands:*
+- search, search the  database with specific patterns;
+- insert, insert codes from database to target file;
+- store, capture code segment from existing file, and store to database for sharing;
+- list, show a specific code with the specified codeid;
+- int, reserve for interactive command;
 
 ## store code from specified files
-by using of 'store' command, users can store a code segment into database. using command like:
-```
-cb-sv store -f filename,startline,endline
-```
+by using of 'store' command, users can store a code segment into database. And the 'store' sub-command support optional options for specific opeartions.
+#TODO
+
+
 ### mark and replacement feature
 set a mark while storing the code by -m switch, which will create a temporary file that contains code for
 storing, and users are free to setup marks like: `<0>`,`<1>`
@@ -36,16 +36,22 @@ cb-sv search '\w+\s+has information'
 ```
 cb-sv list codeid
 ```
-## insert code from database, with specified codeid
-To insert specific code from database to specific file, if the source code has marks, then a '-o markoverrides' are required.
-*command example:*
-```
-cb-sv insert codeid -o '<replacement for mark0>,<replacement for mark1>'
-```
+## insert code from database
+To insert specific code from database to specific file.  
 
 ## user interactive mode
-by using interactive mode, users can easily setup their new code file through various of codes from data base.
 #TBD
+by using interactive mode, users can easily setup their new code file through various of codes from data base.
+The interactive feature allows users to assemble their own codes from multiple codeids. However, this feature will create a temporary file.
+By calling the 'int' sub-command, users can enter into interactive mode, which will have following commands to operate:
+- search, searching contents with specific pattern;
+- insert, insert specific codeid's codes into a temporary file;
+	- insert from codelib, with/without marks.
+	- insert from user input, raw codes.
+- flush, to flush the inserted codes into a file;
+- help, help information.
+- modify, modify a pattern matched string with the substitute string
+
 
 # Use Cases
 ## specify code type when storing
@@ -55,7 +61,6 @@ use '-t type' to specify the type of the code, currently supports:
 - module
 - interface
 ## formats in codelib database
-
 ---
 database file:
 \*\*codelib\*\* ...
@@ -113,7 +118,7 @@ db
 ```
 ## constructor
 **api** `initialize(args,d)`
-```
+```ruby
 @debug = d;
 args= filterCmd(args);
 opt = Options.new(args,@debug);
@@ -137,23 +142,23 @@ return self.send(message,args);
 ```
 ## pre process different commands
 **api** `storePreProcess(args)`
-```
+```ruby
 # no pre-process for store
 return args;
 ```
 **api** `listPreProcess(args)`
-```
+```ruby
 @codeid = args.shift;
 return args;
 ```
 **api** `searchPreProcess(args)`
-```
+```ruby
 # pattern used for search actions
 @pattern = args.shift;
 return args;
 ```
 **api** `insertPreProcess(args)`
-```
+```ruby
 @codeid = args.shift;
 return args;
 ```
@@ -363,7 +368,7 @@ end.parse!
 ## filterFilename
 according to the filename option, which might have the line options, to get the file,start,end options:
 **api** `filterFilename(v)`
-```
+```ruby
 splitted = v.split(',');
 len = splitted.length;
 if len==1
@@ -390,7 +395,7 @@ return;
 dbroot
 ```
 **api** `initialize(d)`
-```
+```ruby
 @dbroot = File.join($toolhome,'db');
 ```
 **api** `insertContents(fn,s,cnts)`
@@ -411,7 +416,7 @@ return;
 **api** `captureCodes(fn,s=1,e=-1)`
 capturing specific lines from given file
 s is start line, e is end line, if e is -1, then will capture until the end of file.
-```
+```ruby
 fh = File.open(fn,'r');
 cnts=[];
 all= fh.readlines();
