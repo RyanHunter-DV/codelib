@@ -58,12 +58,12 @@ use '-t type' to specify the type of the code, currently supports:
 
 ---
 database file:
-**codelib** ...
-**codetype** method...
-**description**
+\*\*codelib\*\* ...
+\*\*codetype\*\* method...
+\*\*description\*\*
 here is description
 ...
-**code**
+\*\*code\*\*
 ```
 here is code
 function void build_phase(
@@ -89,7 +89,7 @@ endfunction
 
 
 # MainEntry
-**file** 'lib_v2/mainentry.rb'
+**file** `lib_v2/mainentry.rb`
 **class** `MainEntry`
 **require**
 ```
@@ -322,12 +322,12 @@ return desc;
 # Options
 An option processor leverage the standard OptionParser, with a given argv, which is pre-processed by MainEntry.
 
-**file** `lib_v2/options.rb'
+**file** `lib_v2/options.rb`
 **require**
 ```
 optparse
 ```
-**class** 'Options'
+**class** `Options`
 **field**
 ```
 options
@@ -377,7 +377,7 @@ return;
 ```
 
 # FileOperator
-**file** 'lib_v2/fileOperator.rb'
+**file** `lib_v2/fileOperator.rb`
 **class** `FileOperator`
 **field**
 ```
@@ -437,7 +437,7 @@ return info;
 ```
 
 # DataBase
-**file** 'lib_v2/database.rb'
+**file** `lib_v2/database.rb`
 **class** `DataBase`
 **field**
 ```
