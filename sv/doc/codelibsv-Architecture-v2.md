@@ -143,7 +143,7 @@ return self.send(message,args);
 ## pre process different commands
 **api** `storePreProcess(args)`
 ```ruby
-# no pre-process for store
+@codeid = args.shift;
 return args;
 ```
 **api** `listPreProcess(args)`
@@ -179,6 +179,7 @@ details: [[#FileOperator]]
 cnts = @fop.captureCodes(@options[:file],@options[:start],@options[:end]);
 desc = description();
 cnts = marking(cnts) if @options[:mark];
+raise RunException.new("no codeid specidied",5) if not @codeid;
 @db.store(@codeid,@options[:type],desc,cnts);
 ```
 ## process insert command
@@ -191,18 +192,22 @@ cnts = marking(cnts) if @options[:mark];
 # codedb has format: {:id=>'',:type=>'',:desc=>'',:code=>[]}
 codedb = @db.load(@codeid);
 codedb[:code] = replaceMarks(codedb[:code],@options[:ovrd]) if @options[:ovrd];
-info = {:classname=>'',:endclass=>0};
-info = @fop.findEnclosedClass(@options[:file],@options[:start]) if codedb[:type]=='method';
-if info[:classname]
-	# methods within class
-	heads = filterMethodHead(codedb[:code]);
-	heads[0]= "extern "+heads[0];
-	insertMethodPrototype(@options[:file],@options[:start],heads);
-	addClassScope(codedb[:code][0],info[:classname]);
-	insertMethodBody(@options[:file],info[:endclass]+1,codedb[:code]);
-else
-	# pure methods
-	insertMethodBody(@options[:file],@options[:start],codedb[:code]);
+if codedb[:type] =='method'
+	info = {:classname=>'',:endclass=>0};
+	info = @fop.findEnclosedClass(@options[:file],@options[:start]);
+	if info[:classname]
+		# methods within class
+		heads = filterMethodHead(codedb[:code]);
+		heads[0]= "extern "+heads[0];
+		insertMethodPrototype(@options[:file],@options[:start],heads);
+		addClassScope(codedb[:code][0],info[:classname]);
+		insertMethodBody(@options[:file],info[:endclass]+1,codedb[:code]);
+	else
+		# pure methods
+		insertMethodBody(@options[:file],@options[:start],codedb[:code]);
+	end
+	else
+	@fop.insertContents(@options[:file],@options[:start],codedb[:code]);
 end
 ```
 **api** `insertMethodPrototype(fn,s,cnts)`
@@ -269,9 +274,9 @@ return ovrds;
 codeids = @db.search(@pattern);
 raise RunException.new("nothing matched with '#{@pattern}'",0) if codeids.empty?;
 codeids.each do |codeid|
-	cnts = @db.load(codeid);
+	codedb = @db.load(codeid);
 	puts "-"*60;
-	puts cnts.join("\n");
+	puts codedb[:code].join("\n");
 	puts "-"*60;
 end
 return;
@@ -351,7 +356,7 @@ options
 @options[:ovrd] = '';
 opt = OptionParser.new() do |o|
 	o.on('-f','--filename=FILENAME','specify filename with line options') do |v|
-		fileterFilename(v);
+		filterFilename(v);
 	end
 	o.on('-m','--mark','enable mark feature') do |v|
 		@options[:mark] = v;
@@ -404,7 +409,7 @@ fh = File.open(fn,'r');
 all = fh.readlines();
 fh.close;
 cnts.map!{|l|l+"\n";}; cntr = cnts.reverse;
-all.insert(s,*cntr);
+all.insert(s.to_i,*cnts);
 fh = File.open(fn,'w');
 all.each do |l|
 	fh.write(l);
@@ -417,13 +422,14 @@ return;
 capturing specific lines from given file
 s is start line, e is end line, if e is -1, then will capture until the end of file.
 ```ruby
+s=s.to_i;e=s.to_i;
 fh = File.open(fn,'r');
 cnts=[];
 all= fh.readlines();
 fh.close();
 len= all.length;
 e=len if e==-1;
-all.each_with_index do |i,l|
+all.each_with_index do |l,i|
 	if i+1 >= s or i+1 <= e
 		cnts << l;
 	end
@@ -467,6 +473,7 @@ dbfiles
 ```
 **api** `store(codeid,type,desc,cnts)`
 ```ruby
+Dir.mkdir(@dbhome) unless Dir.exists?(@dbhome);
 f = __getfile__(codeid);
 fh = File.open(f,'w');
 fh.write("**codelib** `#{codeid}`\n");
@@ -528,10 +535,21 @@ return;
 **api** `load(id)`
 load specific id codes and return to caller
 ```ruby
+codedb={};
 fh = File.open(File.join(@dbhome,"#{id}.md"),'r');
 cnts = fh.readlines()
 cnts.map!{|l| l.chomp;};
-return cnts;
+mark = :head;
+codedb[:code]=[];
+codedb[:type]=:default;
+cnts.each do |l|
+	mdata = /\*\*codetype\*\* `(\S+)`/.match(l);
+	codedb[:type] = mdata[1] if mdata;
+	codedb[:code] << l if (mark==:code);
+	mark=:code if /\*\*code\*\*/=~l;
+end
+codedb[:code].delete_if{|item| item=='```'};
+return codedb;
 ```
 
 ## search pattern from codelib
