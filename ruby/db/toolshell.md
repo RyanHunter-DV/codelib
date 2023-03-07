@@ -1,25 +1,27 @@
 **description**
-This code block used for tool shell for every ruby programs
+typical tool shell, by which tool can directly load the includes
 **code**
 #! /usr/bin/env ruby
 
 require 'rhload';
 
 $version = 'v1';
-$bin = File.dirname(File.absolute_path(__FILE__));
-$toolhome = File.join(File.dirname($bin),'ruby');
-$LOAD_PATH << $toolhome;
+$toolhome = File.dirname(File.absolute_path(__FILE__));
 $lib = "lib_#{$version}";
+$LOAD_PATH << File.join($toolhome,$lib);
 
-rhload "#{$lib}/debugger.rb";
-rhload "#{$lib}/exceptions.rb";
-rhload "#{$lib}/options.rb";
-rhload "#{$lib}/fileoperator.rb";
-rhload "#{$lib}/database.rb";
-rhload "#{$lib}/mainentry.rb";
+#rhload "debugger.rb";
+rhload "exceptions.rb";
+## rhload "options.rb";
+## rhload "fileoperator.rb";
+## rhload "database.rb";
+rhload "mainentry.rb";
 
-debug=Debugger.new(false);
-e = MainEntry.new(debug);
-$SIG = e.run();
-debug.print("program exists with sig: #{$SIG}");
-exit $SIG;
+begin
+	entry = MainEntry.new();
+	entry.run();
+rescue RunException => e
+	e.process;
+end
+
+exit 0;
