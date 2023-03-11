@@ -18,7 +18,9 @@ class Options
 
 	def getCommandUserOptions ##{{{
 		cmd = ARGV.shift;
-		CommandPanel.send(cmd);
+		message = "pre#{cmd.capitalize}".to_sym;
+		CommandPanel.send(message);
+		@options[:cmd] = cmd.to_sym;
 	end ##}}}
 
 	def getFileInfoFromUserParam(src) ##{{{
