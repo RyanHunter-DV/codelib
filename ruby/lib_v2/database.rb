@@ -1,9 +1,11 @@
 require 'open3';
 class DataBase
 
+	attr_accessor :dbhome;
+	attr_accessor :dbfiles;
+
+
 	attr :debug;
-	attr :dbhome;
-	attr :dbfiles;
 
 	def initialize d
 		@debug = d;
@@ -12,9 +14,14 @@ class DataBase
 		Dir.mkdir(@dbhome) unless Dir.exists?(@dbhome);
 	end
 
+	# according to given id, return the filename of that id
+	def dbfile(id) ##{{{
+		return "#{id}.md";
+	end ##}}}
 	# load files into db
 	def load
 		@dbfiles = Dir.children(@dbhome);
+		@debug.print("current dbfiles: #{@dbfiles}");
 	end
 
 	def remove(id) ##{{{
@@ -70,6 +77,8 @@ class DataBase
 		desc.each do |l|
 			fh.write("#{l}\n");
 		end
+		fh.write("**codeid**\n");
+		fh.write("#{id}\n");
 		fh.write("**code**\n");
 		__removeStartIndents__(cnts);
 		cnts.each do |l|
@@ -124,7 +133,7 @@ class DataBase
 	end ##}}}
 
 	def search(ptrn)
-		cmd = %Q|grep -rn "#{ptrn}" #{@dbhome}|;
+		cmd = %Q|grep -rin "#{ptrn}" #{@dbhome}|;
 		@debug.print(cmd);
 		out,err,st = Open3.capture3(cmd);
 		raise RunException.new("pattern search failed(#{err})",8) if st.exitstatus!=0;

@@ -10,10 +10,12 @@ module CommandPanel
 	attr :debug;
 	attr :needs;
 	attr :processes;
+	attr :currentCmd;
 
-	def loadCommands
+	def self.loadCommands
 		cmdpath = 'cmds';
-		fs = Dir.children;
+		r = File.dirname(File.absolute_path(__FILE__));
+		fs = Dir.children(File.join(r,cmdpath));
 		fs.each do |f|
 			@debug.print("loading command #{f}");
 			require File.join(cmdpath,f);
@@ -23,14 +25,16 @@ module CommandPanel
 	def self.setup(o,d) ##{{{
 		@options = o;
 		@debug   = d;
+		@currentCmd;
 		@db = DataBase.new(@debug);
 		@sh = ShellCmd.new(@debug);
-		@needs=[];@processes=[];
+		@needs={};@processes={};
+		@db.load;
 		loadCommands; 
 	end ##}}}
 
 
-	def readUserOption(count=1) ##{{{
+	def self.readUserOption(count=1) ##{{{
 		return ARGV.shift if count==1;
 		opts = [];
 		count.times do
@@ -40,30 +44,34 @@ module CommandPanel
 	end ##}}}
 
 	def self.need(&block) ##{{{
-		p -> {
-			v="@#{cmds.last}needs".to_sym;
-			self.define_instance_variable(v,{});
+		p = lambda { |s|
+			@debug.print("processing need for cmd: #{@currentCmd}");
+			v="@#{@currentCmd}needs".to_sym;
+			self.instance_variable_set(v,{});
 			block.call;
 		};
-		@debug.print("get cmd for need: #{@cmd.last}");
-		@needs[@cmds.last] = p;
+		@debug.print("get cmd for need: #{@currentCmd}");
+		@needs[@currentCmd] = p;
 	end ##}}}
 
 	def self.process(&block) ##{{{
-		@debug.print("get cmd for process: #{@cmd.last}");
-		@processes[@cmds.last] = &block;
+		@debug.print("get cmd for process: #{@currentCmd}");
+		@processes[@currentCmd] = block;
 	end ##}}}
 
 	def self.createCommand(n,&block) ##{{{
+		@currentCmd= n;
 		self.instance_eval &block;
 		prem = "pre#{n.capitalize}";
 		self.define_singleton_method prem do
-			@debug.print("calling method #{prem}");
-			self.instance_eval @needs[n];
+			@debug.print("calling method #{prem}, n: #{n}, instance: #{@needs[n]}");
+			p = @needs[n];
+			@currentCmd=n;
+			self.instance_eval &p;
 		end
 		self.define_singleton_method n do
 			@debug.print("calling method #{n}");
-			self.instance_eval @processes[n];
+			self.instance_eval &@processes[n];
 		end
 	end ##}}}
 end

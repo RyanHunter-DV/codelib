@@ -3,7 +3,9 @@ class ShellCmd
 	attr_accessor :debug;
 	def initialize(d) ##{{{
 		@editor = ENV['EDITOR'] if ENV.has_key?('EDITOR');
-		@editor = 'vim' if @editor!=nil and @editor!='';
+		@editor = 'vim' if @editor==nil or @editor=='';
+		@debug  = d;
+		@debug.print("using editor: #{@editor}");
 	end ##}}}
 
 	# special for codelib tool, create a tmp file, put descript head, and collect user entered
@@ -14,6 +16,7 @@ class ShellCmd
 		fh.write("please enter your codeblock description below:");
 		fh.close;
 		cmd = "#{@editor} #{tmpf}";
+		@debug.print("call cmd: #{cmd}");
 		sig = system(cmd);
 		@debug.print("get #{@editor} return sig: #{sig}");
 		if sig!=true
@@ -30,5 +33,12 @@ class ShellCmd
 			line.chomp!;
 		end
 		return desc;
+	end ##}}}
+
+	# delete a specified file
+	def remove(p,f) ##{{{
+		full = File.join(p,f);
+		File.delete(full) if File.exists?(full);
+		return;
 	end ##}}}
 end

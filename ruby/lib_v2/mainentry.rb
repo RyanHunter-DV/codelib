@@ -9,18 +9,19 @@ class MainEntry
 	attr_accessor :debug;
 	attr_accessor :options;
 
+	attr :optionH;
 	def initialize
 		@debug = Debugger.new(true);
-		o = Options.new();
-		@options = o.options;
+		@optionH = Options.new();
+		@options = @optionH.options;
 		CommandPanel.setup(@options,@debug);
 	end
 
 	def run ##{{{
 		sig = 0;
 		begin
-			o.parse;
-			Commandpanel.send(@options[:cmd]); # process cmd
+			@optionH.parse;
+			CommandPanel.send(@options[:cmd]); # process cmd
 		rescue RunException => e
 			sig = e.process
 		end

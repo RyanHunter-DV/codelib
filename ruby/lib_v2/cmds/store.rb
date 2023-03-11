@@ -6,9 +6,12 @@ command :store do
 	end
 	process do
 		id = @storeneeds[:id];
-		fop = FileOperator.new(options[:file],@debug);
-		cnts = fop.captureContent(options[:start],options[:end]);
-		raise RunException.new("codeid #{id} already exists",3) if @db.codeidExists(id);
+		raise RunException.new("no valid filename specified by -f",3) unless @options[:file];
+		@debug.print("get -f: #{@options[:file]}");
+		fop = FileOperator.new(@options[:file],@debug);
+		cnts = fop.captureContent(@options[:start],@options[:end]);
+		@debug.print("id to be stored: #{id}");
+		raise RunException.new("codeid #{id} already exists",3) if @db.codeid?(id);
 		desc = @sh.getUserDescription;
 		@db.store(id,desc,cnts);
 	end
