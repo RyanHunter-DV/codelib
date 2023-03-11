@@ -13,8 +13,9 @@ class FileOperator
 		fh = File.open(@filename,'r');
 		all = fh.readlines(); fh.close;
 		e = all.length if e==-1;
+		@debug.print("capture range: #{s} -> #{e}");
 		captured=[];
-		for i in (s..e) do
+		for i in s..e do
 			captured << all[i-1].chomp! if i>=s and i<=e;
 		end
 		return captured;

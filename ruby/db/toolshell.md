@@ -1,5 +1,7 @@
 **description**
-typical tool shell, by which tool can directly load the includes
+for normal tool shell
+**codeid**
+toolshell
 **code**
 #! /usr/bin/env ruby
 
@@ -7,21 +9,13 @@ require 'rhload';
 
 $version = 'v1';
 $toolhome = File.dirname(File.absolute_path(__FILE__));
-$lib = "lib_#{$version}";
+$lib = "lib";
 $LOAD_PATH << File.join($toolhome,$lib);
 
-#rhload "debugger.rb";
-rhload "exceptions.rb";
-## rhload "options.rb";
-## rhload "fileoperator.rb";
-## rhload "database.rb";
-rhload "mainentry.rb";
+require "mainentry.rb";
 
-begin
-	entry = MainEntry.new();
-	entry.run();
-rescue RunException => e
-	e.process;
-end
+entry = MainEntry.new();
+$SIG = entry.run();
 
-exit 0;
+puts "program exists with sig: #{$SIG}";
+exit $SIG;

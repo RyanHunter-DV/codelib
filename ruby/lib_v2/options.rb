@@ -30,8 +30,8 @@ class Options
 		@options[:file]='';@options[:start]=1;@options[:end]=-1;
 		splitted = src.split(',');
 		@options[:file] = splitted[0];
-		@options[:start]= splitted[1] if splitted.length>1;
-		@options[:end]  = splitted[2] if splitted.length>2;
+		@options[:start]= splitted[1].to_i if splitted.length>1;
+		@options[:end]  = splitted[2].to_i if splitted.length>2;
 		return;
 	end ##}}}
 end
