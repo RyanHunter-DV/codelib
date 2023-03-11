@@ -19,4 +19,28 @@ class FileOperator
 		end
 		return captured;
 	end ##}}}
+
+	def insertContent(s=1,cnts) ##{{{
+		@debug.print("insert to: #{@filename},#{s}");
+		puts "insert cnts: #{cnts}";
+		fh = File.open(@filename,'r');
+		origin = fh.readlines();fh.close;
+		new = [];
+		current = 1;
+		origin.each do |l|
+			@debug.print("looping origin,s:#{s},current:#{current} line:#{l}");
+			if s==current
+				@debug.print("append cnts:#{cnts} to line:#{current}");
+				new.append(*cnts);
+			end
+			new << l;
+			current += 1;
+		end
+		new.append(*cnts) if origin.empty?;
+		fh = File.open(@filename,'w');
+		new.each do |l|
+			fh.write(l);
+		end
+		fh.close;
+	end ##}}}
 end
