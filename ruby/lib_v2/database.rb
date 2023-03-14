@@ -91,7 +91,9 @@ class DataBase
 		start  = true;
 		indent = nil;
 		m = nil;
+		@debug.print("src: #{src}");
 		src.each do |s|
+			@debug.print("current s: #{s}");
 			if start==true
 				m = /(^\t*)/.match(s);
 				if m

@@ -1,3 +1,8 @@
+**description**
+A typical MainEntry class, users can insert it and simply modify some codes
+**codeid**
+MainEntry
+**code**
 require 'debugger.rb'
 require 'exceptions.rb'
 require 'options.rb'
@@ -11,7 +16,7 @@ class MainEntry
 
 	attr :optionH;
 	def initialize
-		@debug = Debugger.new(false);
+		@debug = Debugger.new(true);
 		@optionH = Options.new();
 		@options = @optionH.options;
 		CommandPanel.setup(@options,@debug);

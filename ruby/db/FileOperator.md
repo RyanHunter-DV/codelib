@@ -1,3 +1,8 @@
+**description**
+A class to support file operations
+**codeid**
+FileOperator
+**code**
 require 'debugger.rb'
 class FileOperator
 	attr_accessor :filename;
@@ -14,13 +19,10 @@ class FileOperator
 		all = fh.readlines(); fh.close;
 		e = all.length if e==-1;
 		@debug.print("capture range: #{s} -> #{e}");
-		@debug.print("range type: s(#{s.class}), e(#{e.class})");
 		captured=[];
 		for i in s..e do
-			#puts "current line: #{i}(#{all[i-1]}), e: #{e}(#{e.class}),cnts: #{all.length}";
-			captured << all[i-1].chomp if i>=s and i<=e;
+			captured << all[i-1].chomp! if i>=s and i<=e;
 		end
-		@debug.print("#{captured}");
 		return captured;
 	end ##}}}
 
