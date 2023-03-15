@@ -27,7 +27,7 @@ class Options
 		e = @options[:entry];
 		raise RunException.new("invalid entry specified(#{e})",3) unless e != '' and File.exists?(e);
 		p = @options[:path];
-		raise RunException.new("invalid path specified(#{p})",3) unless e != '';
+		raise RunException.new("invalid path specified(#{p})",3) unless p != '';
 		return;
 	end ##}}}
 	def initOptions ##{{{
