@@ -1,13 +1,12 @@
 #! /usr/bin/env ruby
 
-require 'rhload';
-
 $version = 'v2';
 $bin = File.dirname(File.absolute_path(__FILE__));
 $toolhome = File.join(File.dirname($bin),'ruby');
 $lib = "lib_#{$version}";
 $LOAD_PATH << File.join($toolhome,$lib);
 
+require 'rhload.rb';
 rhload "mainentry.rb";
 
 # debug=Debugger.new(false);
